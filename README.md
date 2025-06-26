@@ -68,7 +68,7 @@ This project covers the complete review analytics pipeline, from data wrangling 
 
 1. Product_name: Name of product
 2. Product_price: Price of product
-3. Rate: Customer rating (1-5)
+3. Rate: Customer rating (1-5) 1 being the worst; 5 being the best
 4. Review: Full review text
 5. Summary: A descriptive information of customer's thought on each product.
 6. Sentiment: Contains 3 labels - Positive, Negative, and Neutral (Based on Summary)
@@ -76,51 +76,113 @@ This project covers the complete review analytics pipeline, from data wrangling 
 
 ## 📅 Methodology Snapshots & Insights
 
-### 🌐 WordCloud - All Feedback
+### 🌐 WordCloud - All Feedback (What Is The Overall Sentiment of The Brand?)
 <img width="638" alt="image" src="https://github.com/user-attachments/assets/22076075-beef-4d44-b65a-7544971345bd" />
 
-- Customers frequently mention: `good`, `excellent`, `thank`, `worth`, `value`, indicating overall positivity. The wordcloud is dominated by mostly positive words, showing that consumers of Flipkart generally have a positive outlook on the brand. 
+- To understand the overtone of Flipkart's customer reviews, I first **lemmatized** the Summary column by condensing words into their base form (e.g. 'loved' becomes 'love') and removed common stopwords like ('the', 'is', 'and'). I then generated the WordCloud above to visualize frequently used keywords across all reviews.
+
+`Findings:` Customers frequently mention: `good`, `excellent`, `thank`, `worth`, `value`, indicating overall positivity. 
+
+`Summary:` The positive words appear consistently across a large dataset of the 205k reviews, suggesting that Flipkart has a predominatly positive customer experience base.
+
 
 ### 🌐 WordCloud - Non-Positive Feedback (What Are Dissatisfied Customers Saying?)
 <img width="636" alt="image" src="https://github.com/user-attachments/assets/6a3f300d-0127-404a-9116-99ce86ee6996" />
 
-- After isolating the `Positive` and `Very Positive` sentiments:
-  - Frequent negative signals include `dont buy`, `poor`, `quality`, `waste money`, `broken`, `worst`, `small size`, `stopped working`, and `service bad`.
+- To uncover key customer pain points, I filtered the dataset to include only reviews labeled as `Neutral`, `Negative`, and `Very Negative` using my `Enhanced_Sentiment` classifier. 
+
+`Findings:` Common negative expressions and keywords revealed: 
+  - `dont buy`, `waste money`, `poor quality`, `service bad`
+  - `broken`, `stopped working`, `worst product`
+  - Size related complaints: `small size`, `size`?
+  - `average`, `low quality`
+
+`Summary:` While the size of dissatisafied customer reviews is **significantly smaller** than Positive reviews, they reflect concerns that Flipkart can address about product reliability, misleading sizes, and poor after sales service.
+
+<img width="220" alt="image" src="https://github.com/user-attachments/assets/8b5649dc-2d1e-4c20-8da2-7261173c39ec" />
+
+
 
 ### 📊 Sentiment Distribution
 <img width="597" alt="image" src="https://github.com/user-attachments/assets/f41e2ee4-b290-4090-a30d-260c3bc9b1c9" />
 
-- Over 60% of reviews are `Very Positive`.
+- To provide a visual of the proportions of the five enhanced sentiment classes, I plotted a bar chart based on the percentages of each sentiments.
 
-- `Neutral` and `Negative`, and `Very Negative` reviews form only about 20% combined.
+`Findings:` 
+- Over 60% of all reviews are `Very Positive` (Strong satisfaction as expected based on Wordcloud findings)
+- `Positive` (14%) and `Neutral` (11%) sentiments formed the mid range, likely representing reviews that are short, vague, or ambivalent words like "ok ok product", "not bad" or "fine".
+- `Negative` (~4%) and `Very Negative` (~8%) sentiments are rare.
+
+`Summary:` This suggests that highly critical reviews are in the minority, which reflects high customer satisfaction, effective issue resolution for most, or there could be an underlying cause: review selection bias, where satisfied customers are more likely to leave a feedback? 
+
+The low volume of negative sentiment may also indicate that Flipkart's quality control and resolution management are generally effective even though a small percentage of dissatisfaction still warrants deeper attention as seen in the previous word cloud.
+
 
 ### 🏛️ Correlation Heatmap
 <img width="620" alt="image" src="https://github.com/user-attachments/assets/50f3bcc2-c593-43f1-b148-8e9dd2ee4109" />
 
-- `Sentiment_score` and `Rate`: +0.70 (strong positive correlation)
+- I then use a heatmap to visualize the **pearson correlation coefficients** between crucial features like `sentiment_score`, `Rate`, `product_price`, and `summary_length`.
 
-- `Product_price` & `Rate`: ~0.06 (weak positive correlation)
+`Findings:` 
+  - `Sentiment_score` and `Rate` has the strongest positive correlation of +0.70. The more positive the review text (as measured by VADER), the higher the customer rating. This makes sense and validates my VADER sentiment which captures customer satisfaction well.
 
-- `Summary_length` & `Rate`: -0.07 (weak negative correlation)
+  - `product_price` and `Rate` has a very weak positive correlation of +0.064. Ratings are not strongly affected by price and customer do not necessarily rate higher for more expensive items which is true. Satisfaction likely depends more on value perception.
+
+  - `summary_length` and `Rate` has a slight negative correlation of -0.07. Longer summaries tend to be associated with lower or neutral ratings, which suggests that customers may write more when they have issues or mixed experiences.
+
+`Summary:` Sentiemnt score is the strongest predictor of how a customer rates, which reinforces the value of my NLP sentiment analysis in customer experience. Price and summary length do not meaningfully impact rating scores as well, buttressing the analysis that expectation vs reality matters more than cost or verbosity. 
+
+Albeit the correlation heatmap shows a brief overview of the relationships betwen each selected feature, it does not represent causation. 
 
 ### 🛋️ Boxplot: Summary Length vs Sentiment
 <img width="615" alt="image" src="https://github.com/user-attachments/assets/39d714dc-07ea-457d-a2bb-001c9f67de5f" />
 
-- Very Negative reviews are the longest (median around 8 words).
+- Next, to explore how review length correlates to emotional tone, I plotted a boxplot to compare the `Summary_length` across each `Enhanced_Sentiment` classes.
 
-- Positive reviews are short and uniform.
+`Findings:` 
+  - In general, each sentiment category looks relatively uniform. `Very Negative` reviews have the highest median word count of around 8 words. It also has the widest interquartile range (IQR), showing a broad range of word count in how customers express dissatisfaction.
+
+  - `Positive` and `Very Positive` reviews are shorter on average, and also more uniform in length, shown by the narrow IQR.
+
+  - Outliers (Above 100+ words) are found in every sentiment class. Some users go into extended detail possibly to explain more stronger emotional reactions, have repetitive or storytelling behaviour. No lower outliers is present as words like "ok" or "bad" are too common to be flagged as unusual.
+
+`Summary:` Dissatisfied customers tend to write longer and more varied reviews, possibly to justify their low rating or problems they face. Satisfied customers write more concise and uniform summaries that reflect brief praise. 
+
+However, `Summary_length` alone is not a reliable predictor of satisfaction due to the high variability and presence of long reviews in all categories. Perhaps pairing `Review_length` with `Sentiment_score` could be useful to flag out potential negative experiences for any early intevention. 
+
+
 
 ### 🔺 Stacked Bar: Sentiment Composition by Rating
 <img width="646" alt="image" src="https://github.com/user-attachments/assets/59c0d908-7b12-4776-acf6-02117c5a223f" />
 
-- Sentiment aligns well with Ratings. **`Very Positive` = Rating 5, `Very Negative` = Rating 1.**
+- Finally, let's visualise the distribution of enhanced sentiment classes across the 5 rating levels (1 to 5).
 
-- Some **edge cases** (e.g. `Very Positive` sentiment appeared in 3 star rating), this reflects sarcasm or polite language.
+`Findings:` 
+   - As expected, customers who gave 5 for `Rate` are mostly `Very Positive`, and those who gave 1 for `Rate` are mostly `Very Negative`. This confirms strong alignment between customer rating and textual sentiment.
+
+   - Those who gave 2 and 3 for `Rate` display a mixed sentiment distribution, which is common in real world reviews where a customer's experiences are nuanced or ambivalent. _(Bigne et al., 2023)_
+
+   - A small share of `Very Positive` sentiments are in 3 star ratings. They are likely due to customers having high expectations e.g. (wrote "very impressive" but not fully satisfied.)
+   
+     **Polite language biases? Misalignment or sarcasm** (a limitation of the VADER model), or possibly **user incosistencies in rating and their words**. To verify this, **I will cross-check the ratings for this category.**
 
 **Cross Check Verification:** 
 <img width="611" alt="image" src="https://github.com/user-attachments/assets/c73a942e-2595-47ae-ba65-f61df1bcdb18" />
 
-< include a summary of what was written on jupyter notebooks > 
+- I applied a filter for `Rate` == 3 and `Enhanced_Sentiment` == `Very Positive`, and I found:
+
+  - Words like "Very impressive cooler..." were being categorised into `Very Positive` sentiment by VADER, which explains why despite its neutral tone.
+ 
+  - Customers tend to use **very positive words** like 'awesome' but gave a 3 for `Rate`.
+
+`Summary:` 
+- Since the mismatch is rare and explainable, the classifier remains reliable and accurate for clear cases (1 or 5 star reviews). These edge cases provided me a useful insight.
+
+- There is high overall alignment between sentiment and rating which confirms the strength of my `Enhanced_Sentiment` model.
+
+- There are minor discrepancies in middle ratings but are explainable and acceptable, especially given the limitations of text-only sentiment analysis like VADER.
+
+- The VADER model performs reliably across clear sentiment extremes, and these edge cases provides an opportunity to explore future improvements like incorporating sarcasm detection, or more complex behavioural nuanced modeling.
 
 ### 📊 Regression Results
 
@@ -132,6 +194,13 @@ This project covers the complete review analytics pipeline, from data wrangling 
 
 <img width="351" alt="image" src="https://github.com/user-attachments/assets/63cce804-a4fa-4084-b6c6-bdfebcd95f13" />
 
+
+
+### References
+
+Bigne, E., Ruiz, C., Pérez‑Cabañero, C., & Cuenca, A. C. (2023). _Are customer star ratings and sentiments aligned? A deep learning study of the customer service experience in tourism destinations_. Service Business, 17(1), 281–314. [https://doi.org/10.1007/s11628-023-00524-0 ] (https://www.researchgate.net/publication/368305619_Are_customer_star_ratings_and_sentiments_aligned_A_deep_learning_study_of_the_customer_service_experience_in_tourism_destinations)
+
+Nirali Vaghani, and Mansi Thummar. (2023). _Flipkart Product reviews with sentiment Dataset_ [Data set]. Kaggle. [https://www.kaggle.com/datasets/niraliivaghani/flipkart-product-customer-reviews-dataset/data](https://www.kaggle.com/datasets/niraliivaghani/flipkart-product-customer-reviews-dataset/data)
 
 
 
