@@ -4,17 +4,17 @@
 
 As a Marketing Data Analyst, I was tasked to uncover what drives customer satisfaction on Flipkart using 205,000+ customer reviews. The goal was to:
 
-Understand customer opinions and emotional tone.
+1. Understand customer opinions and emotional tone.
 
-Verify if written feedback aligns with customer satisfaction.
+2. Verify if written feedback aligns with customer satisfaction.
 
-Predict star ratings using sentiment and review characteristics.
+3. Predict star ratings using sentiment and review characteristics.
 
-Provide actionable recommendations for marketing and product stakeholders.
+4. Provide actionable recommendations for marketing and product stakeholders.
 
 ## 📌 Project Brief
 
-This project covers the complete review analytics pipeline, from data wrangling to regression modeling.
+This project covers the complete review analytics pipeline, from data wrangling to regression modeling. **View my code here:** [Flipkart Python Analysis](https://github.com/ashyneo/flipkart_python_project/blob/cd0a5a9af5e484217e4c72fd662a510216c5e8c8/Python%20Personal%20Capstone%20Project%20-%20FlipKart%20Reviews%20Analysis-2.ipynb)
 
 ### 🔄 1. Data Cleaning & Preprocessing:
 
@@ -52,7 +52,7 @@ This project covers the complete review analytics pipeline, from data wrangling 
 
 - Evaluated with R2 Score (0.725), MSE, MAE
 
-### 🔞 5. Insight Extraction:
+### 5. Insight Extraction:
 
 - Used statistical outputs and visual patterns to answer core questions.
 
@@ -75,6 +75,63 @@ This project covers the complete review analytics pipeline, from data wrangling 
 
 
 ## 📅 Methodology Snapshots & Insights
+## 🔍 Data Cleaning & Preprocessing
+
+### **1. Missing Values:**
+
+<img width="207" alt="image" src="https://github.com/user-attachments/assets/3248cfe6-e078-401a-92da-71ae265c125e" />
+
+
+  - Over 24,000 missing reviews were trtained, and flagged with a new `Review_missing` column for modeling.
+  - 11 rows with missing summaries were dropped, as they are unusable for sentiment analysis.
+
+### **2. Non-numeric Data in Numeric Columns:**
+
+<img width="200" alt="image" src="https://github.com/user-attachments/assets/39e6d22d-5002-40e6-a101-0a08f4b12e2b" />
+
+  - There were invalid entries in `Rate` and `product_price` in my dataset. I cleaned it using regex patterns.
+  - Converted the valid entries to float64 & int64 for analysis and modeling. (Previous was object datatype.)
+
+### **3. Outlier Inspection (`Product_price`):**
+
+<img width="767" alt="image" src="https://github.com/user-attachments/assets/f9d63a80-f3ba-412f-b022-d2032579eab3" />
+
+   - Used the **Interquartile range (IQR) method** to detect outliers, and found products worth 8,999.
+   - These extreme values were retained, as further inspection showed that they reflect real product diversity. These products are large appliances priced in Indian Rupees.
+
+
+### **4. Duplicates:**
+
+<img width="775" alt="image" src="https://github.com/user-attachments/assets/f3c9894b-ddc9-4af6-91e0-eec278030d25" />
+
+  - Reviewed potential duplicates in columns `Review`, `Summary`, and `Rate`.
+  - Discovered that these duplicates are acceptable overlaps as multiple users can be reviewing the same product. They were hence retained for data integrity.
+
+    
+### **5. Categorical Consistencies:**
+
+  - Applied the `.unique()` and `.describe()` code to validate the categorical columns to ensure they are loigcally consistent post-cleaning.
+
+
+## 🧹 Text Cleaning & Preprocessing (Regex)
+
+To prepare the dataset for NLP tasks, I used regular expressions to clean the product and summary texts:
+
+  - **Converted text into lowercase**
+  - **Removed all non-alphabet characters** (like punctuations, numbers, symbols @!~)
+  - **Normalised whitespace and trimmed any leading or trailing spaces**
+  - Applied this cleaning to create new columns:
+    - `product_name_clean`
+    - `Summary_clean`
+   
+This step helped remove visual clutter like emojis, price symbols, and made the text more ready for analysis.
+
+_All data cleaning operations are fully documented in the [notebook](https://github.com/ashyneo/flipkart_python_project/blob/cd0a5a9af5e484217e4c72fd662a510216c5e8c8/Python%20Personal%20Capstone%20Project%20-%20FlipKart%20Reviews%20Analysis-2.ipynb)._
+
+
+
+
+
 
 ### 🌐 WordCloud - All Feedback (What Is The Overall Sentiment of The Brand?)
 <img width="638" alt="image" src="https://github.com/user-attachments/assets/22076075-beef-4d44-b65a-7544971345bd" />
@@ -190,9 +247,52 @@ However, `Summary_length` alone is not a reliable predictor of satisfaction due 
 
 <img width="410" alt="image" src="https://github.com/user-attachments/assets/83afc422-3dfa-47f0-b0ac-140f250e7b84" />
 
-### Pearson Coefficients
+**Model's Performance:**
+
+ **R2 Score: 0.725:**
+
+Model explains 72.5% of the variation in customer star ratings. This is considered strong, especially for unstructured UGC text data.
+
+**Mean Squared Error: 0.47:**
+
+On a 1 to 5 rating scale, an average error of under 0.5 shows that the predictions are reasonably close to the actual ratings.
+
+**Feature Coefficients (What happens to target variable `Rate` if the below features increases by 1?)**
+
+  - Product price: +0.00000219. Negligible effect. Price has almost no influence on customer rating.
+  - review length: -0.0709. Longer reviews slightly associated with lower ratings, likely due to complaints.
+  - summary length: -0.0037. Minimal negative effect. Too small to be meaningful.
+  - sentiment score: +0.214. Moderate positive impact. Happier tone leads to higher predicted rating. Makes sense.
+
+
+**Enhanced Sentiment Dummy Variables (Compared to baseline: `Negative`)**
+  - Very Positive: +2.82. Huge boost. Strongest predictor of high rating.
+  - Positive: +2.09. Strong positive influence.
+  - Neutral: +1.35. Moderate uplift, aligns with polite or vague reviews.
+  - Very Negative: -0.569. Pulls rating lower than `Negative`, as expected.
+
+_The feature coefficients confirms the accuracy of the model._
+
+### Pearson Coefficients (Do `Rate` and these features move together? How Strong is the relationship?)
 
 <img width="351" alt="image" src="https://github.com/user-attachments/assets/63cce804-a4fa-4084-b6c6-bdfebcd95f13" />
+
+  - sentiment_score: +0.697. Strongest correlation, this aligns with review tone.
+  - Enhanced_Sentiment_Very_Positive: +0.667. Strongly correlated with higher ratings.
+  - Enhanced_Sentiment_Very_Negative: -0.660. Strong inverse relationship, predicts lower ratings.
+  - Enhanced_Sentiment_Neutral: -0.246. Moderately negative. Many neutral reviews received mid to low ratings.
+  - Enhanced_Sentiment_Positive: -0.028. Slight negative. A small inconsistency worth exploring.
+  - review_length: -0.113. Slightly negative, longer reviews tend to be more critical.
+  - summary_length: -0.0705. Weak negative correlation.
+  - product_price: +0.0639. Very weak positive correlation, price does not significantly impact ratings.
+
+
+`Summary:` Using machine learning & regression analysis, I demonstrated that customer `Rate` can be predicted with high accuracy (R2=0.725) by analyzing how people write their reviews, specifically their sentiment scores, tone, and sentimeny category of the review. 
+
+Tone matters more than price. Customers rate based on experience, not price of the product.
+Positive, concise reviews, tend to align with high ratings.
+Long, detailed reviews, often comes with dissatisfaction or complaints.
+Enhanced sentiment labels were among the strongest predictors, confirming my model's effectiveness in capturing emotional context. 
 
 
 
