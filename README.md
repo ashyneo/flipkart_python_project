@@ -349,7 +349,7 @@ Enhanced sentiment labels were among the strongest predictors, confirming my mod
 
 ## Conclusion
 
-`Findings`
+### `Findings`
 
 **1. What are customer opinions and emotional tones like?**
 
@@ -375,7 +375,7 @@ Dissatisaction stems mostly from 3 key areas:
   - Unclear sizing or misleading listings
   - Delayed or inadequate post sales-service
 
-`Recommended Actions`
+### `Recommended Actions`
 
 1. Repurpose the positive reviews as marketing assets (UGC) in campaigns, and focus on categories with consistently high sentiment for best brand reinforcement.
   
