@@ -8,9 +8,11 @@ As a Marketing Data Analyst, I was tasked to uncover what drives customer satisf
 
 2. Verify if written feedback aligns with customer satisfaction.
 
-3. Predict star ratings using sentiment and review characteristics.
+3. What factors drive customer ratings the most?
 
-4. Provide actionable recommendations for marketing and product stakeholders.
+4. Can we predict star ratings from review characteristics?
+
+5. What are the root causes behind negative reviews and how can we address them?
 
 ## 📌 Project Brief
 
@@ -113,7 +115,7 @@ This project covers the complete review analytics pipeline, from data wrangling 
   - Applied the `.unique()` and `.describe()` code to validate the categorical columns to ensure they are loigcally consistent post-cleaning.
 
 
-## 🧹 Text Cleaning & Preprocessing (Regex)
+### 🧹 6. Text Cleaning & Preprocessing (Regex)
 
 To prepare the dataset for NLP tasks, I used regular expressions to clean the product and summary texts:
 
@@ -126,13 +128,64 @@ To prepare the dataset for NLP tasks, I used regular expressions to clean the pr
    
 This step helped remove visual clutter like emojis, price symbols, and made the text more ready for analysis.
 
-_All data cleaning operations are fully documented in the [notebook](https://github.com/ashyneo/flipkart_python_project/blob/cd0a5a9af5e484217e4c72fd662a510216c5e8c8/Python%20Personal%20Capstone%20Project%20-%20FlipKart%20Reviews%20Analysis-2.ipynb)._
+### 7. NLP Pipeline: Tokenization, Lemmatization & Stopword Removal
+
+To enrich the analysis and prepare for wordcloud visualisations, I:
+
+  - Tokenized each cleaned review summary
+  - Removed common stopwords like "is, the, and .."
+  - Applied lemmatization to reduce words to their base forms (e.g. 'bought' becomes 'buy')
+
+**Created 2 versions:**
+
+<img width="323" alt="image" src="https://github.com/user-attachments/assets/4500a841-b0f5-4bd7-b85d-bee0b546faae" />
+
+  - `Summary_lemmatized:` With stopwords removed, used for Wordclouds
+  - `Summary_lemmatized_allwords:` Retains all the stopwords, for full-text analysis.
+
+### 8. Custom Sentiment Classificaation (VADER + Enhancements Made)
+
+While the dataset contains pre-labeled `Sentiment` column (Positive, Negative, Neutral) initially, I **enhanced** it by:
+
+  - Applying **VADER** to the raw `Summary` column to **generate a new column** called `Sentiment_Detailed`, split into 5 classes (For a more detailed analysis):
+    
+      - Very Positive, Positive, Neutral, Negative, Very Negative
+
+  - **Identified VADER's limitations:**
+
+      - I encountered issues with my model as it fails to detect certain lingo like "ok ok" -> being identified as a Positive sentiment.
+   
+      - Negations being mislabeled. (Potential sarcasm)
+   
+  - **Improvements Made to Sentiment Logic:**
+
+      - Tuned thresholds to make classifications stricter
+   
+      - Added manual overrides for edge cases like ("ok ok" -> Neutral)
+   
+      - Integrated columns `Rate`, `Summary`, and `Review` to make the model's accuracy more **robust**
+   
+  - **Created the `Enhanced_Sentiment` column:**
+
+      - Combines all 3 inputs: text + rating
+   
+      - Adjusted VADER score with rating delta (e.g. "great product" with a rating of 2 is likely an error or sarcasm to capture more nuanced sentiment, which is closer to human interpretation.
+   
+**Output:**
+
+
+<img width="203" alt="image" src="https://github.com/user-attachments/assets/0f32b546-c024-461e-81a2-ac0f0a64eee8" />
+   
+  
+
+
+_All data cleaning operations & my full NLP pipeline and sentiment enhancement code & thought-process can be found here: [notebook](https://github.com/ashyneo/flipkart_python_project/blob/cd0a5a9af5e484217e4c72fd662a510216c5e8c8/Python%20Personal%20Capstone%20Project%20-%20FlipKart%20Reviews%20Analysis-2.ipynb)._
 
 
 
 
 
-
+## Exploratory Data Analysis (EDA) & Visualisations
 ### 🌐 WordCloud - All Feedback (What Is The Overall Sentiment of The Brand?)
 <img width="638" alt="image" src="https://github.com/user-attachments/assets/22076075-beef-4d44-b65a-7544971345bd" />
 
@@ -226,7 +279,7 @@ However, `Summary_length` alone is not a reliable predictor of satisfaction due 
 **Cross Check Verification:** 
 <img width="611" alt="image" src="https://github.com/user-attachments/assets/c73a942e-2595-47ae-ba65-f61df1bcdb18" />
 
-- I applied a filter for `Rate` == 3 and `Enhanced_Sentiment` == `Very Positive`, and I found:
+- I applied a filter for `Rate == 3` and `Enhanced_Sentiment == 'Very Positive'`, and I found:
 
   - Words like "Very impressive cooler..." were being categorised into `Very Positive` sentiment by VADER, which explains why despite its neutral tone.
  
@@ -294,9 +347,52 @@ Positive, concise reviews, tend to align with high ratings.
 Long, detailed reviews, often comes with dissatisfaction or complaints.
 Enhanced sentiment labels were among the strongest predictors, confirming my model's effectiveness in capturing emotional context. 
 
+## Conclusion
+
+`Findings`
+
+**1. What are customer opinions and emotional tones like?**
+
+Over 75% of the 205,000+ reviews show positive sentiment, with "Very Positive" being the most common. Negative feedback is limited, but often found in longer reviews, which typically signal very detailed complaints.
+
+**2. Does written feedback match their satisfaction ratings?**
+
+Yes, especially at the extremes. There is strong alignment between sentiment and rating. Customers who rate 5 often read very positively, while those who rate 1 are clearly negative. However, there are a small number of those who rated 3 contain mixed tones or polite criticism, which sentiment models may miss.
 
 
-### References
+**3. What factors influence customer ratings the most?**
+
+Tone matters more than the price of the product or the length of review. Sentiment score is the strongest indicator of rating, which is expected. Product price and review length have minimal influencer, and in fact, longer reviews slightly correlate with lower scores, which shows that customers tend to write longer (possibly complaints) when giving low ratings.
+
+**4. Can we predict star ratings from review data?**
+
+Yes, with high confidence. The regression model explained 72.5% of rating variation using sentiment and review features, where sentiment alone was the most predictive. 
+
+**5. What causes most negative reviews, and how can we reduce them?**
+
+Dissatisaction stems mostly from 3 key areas:
+  - Broken or poor quality products
+  - Unclear sizing or misleading listings
+  - Delayed or inadequate post sales-service
+
+`Recommended Actions`
+
+1. Repurpose the positive reviews as marketing assets (UGC) in campaigns, and focus on categories with consistently high sentiment for best brand reinforcement.
+  
+   e.g. The "boAt Rockerz Wireless Headphones" category has **85% 'Very Positive'   reviews.** Feature a few of the best UGCs as a carousel in Instagram's story ads   or Flipkart's homepage banners, and pair it with real customer images.
+  
+2. Track longer reviews for deeper dissatisfaction signals by filtering reviews by word count, and using keyword tracking to flag for recurring issues (e.g. delayed delivery, not as described, broke after 2 days) to catch silent frustrations early and reach out before they escalate into public dissatisfaction.
+
+3. Prioritise customer experience over pricing by investing in areas that directly affect satisfaction, like:
+     - delivery (improve tracking, speed, communication),
+     - product quality (audit low-rated SKUs, improve descriptions, add real customer images) 
+     - service (train support staff and fast track tickets in high risk categories).
+
+4. Detect and intercept dissatisfaction early. (Very Important) If a customer selects a low star rating (1-2), they should be prompted _"It looks like you didn't have the best experience. Want to chat with our support team to see how we can help you?"_ We can reduce bad ratings and showcase our brand's proactive care towards customers to foster brand loyalty.
+
+5. Auto-flag problematic reviews with NLP alerts by detecting critical keywords such as as "don't buy", "Waste of money", "broken", "useless". Once detected, there should be a trigger to instantly alert Flipkart's service team for customer support to intervene and resolve issues before escalation.
+
+## References
 
 Bigne, E., Ruiz, C., Pérez‑Cabañero, C., & Cuenca, A. C. (2023). _Are customer star ratings and sentiments aligned? A deep learning study of the customer service experience in tourism destinations_. Service Business, 17(1), 281–314. [https://doi.org/10.1007/s11628-023-00524-0 ] (https://www.researchgate.net/publication/368305619_Are_customer_star_ratings_and_sentiments_aligned_A_deep_learning_study_of_the_customer_service_experience_in_tourism_destinations)
 
